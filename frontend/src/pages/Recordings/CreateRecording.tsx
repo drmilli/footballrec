@@ -10,9 +10,9 @@ import {
   InputLabel,
   Select,
   MenuItem,
-  Grid,
   Alert,
 } from '@mui/material';
+import { Grid } from '@mui/material';
 import { Save as SaveIcon, ArrowBack as BackIcon } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { useForm, Controller } from 'react-hook-form';
@@ -71,7 +71,7 @@ const CreateRecording: React.FC = () => {
         <CardContent>
           <form onSubmit={handleSubmit(onSubmit)}>
             <Grid container spacing={3}>
-              <Grid item xs={12}>
+              <Grid size={{ xs: 12 }}>
                 <Controller
                   name="title"
                   control={control}
@@ -89,7 +89,7 @@ const CreateRecording: React.FC = () => {
                 />
               </Grid>
 
-              <Grid item xs={12}>
+              <Grid size={{ xs: 12 }}>
                 <Controller
                   name="description"
                   control={control}
@@ -106,7 +106,7 @@ const CreateRecording: React.FC = () => {
                 />
               </Grid>
 
-              <Grid item xs={12}>
+              <Grid size={{ xs: 12 }}>
                 <Controller
                   name="stream_url"
                   control={control}
@@ -130,7 +130,7 @@ const CreateRecording: React.FC = () => {
                 />
               </Grid>
 
-              <Grid item xs={12} sm={6}>
+              <Grid size={{ xs: 12, sm: 6 }}>
                 <Controller
                   name="quality"
                   control={control}
@@ -147,7 +147,7 @@ const CreateRecording: React.FC = () => {
                 />
               </Grid>
 
-              <Grid item xs={12} sm={6}>
+              <Grid size={{ xs: 12, sm: 6 }}>
                 <Controller
                   name="format"
                   control={control}
@@ -164,14 +164,14 @@ const CreateRecording: React.FC = () => {
                 />
               </Grid>
 
-              <Grid item xs={12}>
+              <Grid size={{ xs: 12 }}>
                 <Alert severity="info">
                   The recording will be created and can be started immediately or scheduled for later.
                   Make sure the stream URL is accessible and supports the selected format.
                 </Alert>
               </Grid>
 
-              <Grid item xs={12}>
+              <Grid size={{ xs: 12 }}>
                 <Box sx={{ display: 'flex', gap: 2, justifyContent: 'flex-end' }}>
                   <Button
                     variant="outlined"
