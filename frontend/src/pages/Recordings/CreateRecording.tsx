@@ -10,7 +10,7 @@ import {
   InputLabel,
   Select,
   MenuItem,
-  Grid2 as Grid,
+  Grid,
   Alert,
 } from '@mui/material';
 import { Save as SaveIcon, ArrowBack as BackIcon } from '@mui/icons-material';

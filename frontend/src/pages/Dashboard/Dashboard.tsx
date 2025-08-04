@@ -1,7 +1,7 @@
 import React from 'react';
 import {
   Box,
-  Grid2 as Grid,
+  Grid,
   Card,
   CardContent,
   Typography,
