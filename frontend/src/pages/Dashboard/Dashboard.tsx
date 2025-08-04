@@ -1,7 +1,7 @@
 import React from 'react';
 import {
   Box,
-  Grid,
+  Grid2 as Grid,
   Card,
   CardContent,
   Typography,
@@ -10,6 +10,7 @@ import {
   LinearProgress,
   List,
   ListItem,
+  ListItemButton,
   ListItemText,
   ListItemIcon,
   IconButton,
@@ -21,7 +22,6 @@ import {
   SportsFootball as MatchIcon,
   Schedule as ScheduleIcon,
   VideoLibrary as VideoIcon,
-  PlayArrow as PlayIcon,
   Stop as StopIcon,
   Add as AddIcon,
   Refresh as RefreshIcon,
@@ -52,10 +52,7 @@ const Dashboard: React.FC = () => {
     queryFn: () => apiService.getUpcomingMatches(5),
   });
 
-  const { data: upcomingSchedules } = useQuery({
-    queryKey: ['upcomingSchedules'],
-    queryFn: () => apiService.getUpcomingSchedules(5),
-  });
+
 
   const { data: videos } = useQuery({
     queryKey: ['videos'],
@@ -154,7 +151,7 @@ const Dashboard: React.FC = () => {
                 <Typography variant="h6">Matches</Typography>
               </Box>
               <Typography variant="h4" color="primary">
-                {upcomingMatches?.count || 0}
+                {upcomingMatches?.data?.length || 0}
               </Typography>
               <Typography variant="body2" color="text.secondary">
                 upcoming
@@ -188,7 +185,7 @@ const Dashboard: React.FC = () => {
                 <Typography variant="h6">Videos</Typography>
               </Box>
               <Typography variant="h4" color="primary">
-                {videos?.count || 0}
+                {videos?.data?.length || 0}
               </Typography>
               <Typography variant="body2" color="text.secondary">
                 available
@@ -230,7 +227,7 @@ const Dashboard: React.FC = () => {
                           <LinearProgress color="error" />
                         </Box>
                       </ListItem>
-                      {index < activeRecordings.data.length - 1 && <Divider />}
+                      {index < (activeRecordings.data?.length || 0) - 1 && <Divider />}
                     </React.Fragment>
                   ))}
                 </List>
@@ -255,8 +252,7 @@ const Dashboard: React.FC = () => {
                 <List>
                   {recordings?.data?.slice(0, 5).map((recording, index) => (
                     <React.Fragment key={recording.id}>
-                      <ListItem
-                        button
+                      <ListItemButton
                         onClick={() => navigate(`/recordings/${recording.id}`)}
                       >
                         <ListItemIcon>
@@ -271,7 +267,7 @@ const Dashboard: React.FC = () => {
                           color={getStatusColor(recording.status) as any}
                           size="small"
                         />
-                      </ListItem>
+                      </ListItemButton>
                       {index < (recordings?.data?.length || 0) - 1 && <Divider />}
                     </React.Fragment>
                   ))}
@@ -299,8 +295,7 @@ const Dashboard: React.FC = () => {
               <List>
                 {upcomingMatches?.data?.slice(0, 5).map((match, index) => (
                   <React.Fragment key={match.id}>
-                    <ListItem
-                      button
+                    <ListItemButton
                       onClick={() => navigate(`/matches/${match.id}`)}
                     >
                       <ListItemIcon>
@@ -313,7 +308,7 @@ const Dashboard: React.FC = () => {
                       {match.auto_record && (
                         <Chip label="Auto Record" color="primary" size="small" />
                       )}
-                    </ListItem>
+                    </ListItemButton>
                     {index < (upcomingMatches?.data?.length || 0) - 1 && <Divider />}
                   </React.Fragment>
                 ))}
