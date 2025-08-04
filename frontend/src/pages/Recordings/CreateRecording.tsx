@@ -6,17 +6,16 @@ import {
   CardContent,
   TextField,
   Button,
+  Grid,
   FormControl,
   InputLabel,
   Select,
   MenuItem,
-  Grid,
   Alert,
 } from '@mui/material';
-import { Save as SaveIcon, ArrowBack as BackIcon } from '@mui/icons-material';
+import { Controller, useForm } from 'react-hook-form';
+import { useMutation } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
-import { useForm, Controller } from 'react-hook-form';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNotification } from '../../contexts/NotificationContext';
 import apiService from '../../services/api';
 import { RecordingFormData } from '../../types';
@@ -24,9 +23,13 @@ import { RecordingFormData } from '../../types';
 const CreateRecording: React.FC = () => {
   const navigate = useNavigate();
   const { showNotification } = useNotification();
-  const queryClient = useQueryClient();
 
-  const { control, handleSubmit, formState: { errors } } = useForm<RecordingFormData>({
+  const {
+    control,
+    handleSubmit,
+    formState: { errors },
+    reset,
+  } = useForm<RecordingFormData>({
     defaultValues: {
       title: '',
       description: '',
@@ -36,34 +39,37 @@ const CreateRecording: React.FC = () => {
     },
   });
 
-  const createMutation = useMutation({
+  const createRecordingMutation = useMutation({
     mutationFn: (data: RecordingFormData) => apiService.createRecording(data),
     onSuccess: (response) => {
-      showNotification('Recording created successfully', 'success');
-      queryClient.invalidateQueries({ queryKey: ['recordings'] });
+      showNotification('Recording created successfully!', 'success');
       navigate(`/recordings/${response.data?.id}`);
     },
     onError: (error: any) => {
-      showNotification(error.response?.data?.error || 'Failed to create recording', 'error');
+      showNotification(
+        error.response?.data?.message || 'Failed to create recording',
+        'error'
+      );
     },
   });
 
   const onSubmit = (data: RecordingFormData) => {
-    createMutation.mutate(data);
+    createRecordingMutation.mutate(data);
+  };
+
+  const handleCancel = () => {
+    reset();
+    navigate('/recordings');
   };
 
   return (
-    <Box>
-      <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
-        <Button
-          startIcon={<BackIcon />}
-          onClick={() => navigate('/recordings')}
-          sx={{ mr: 2 }}
-        >
-          Back
-        </Button>
-        <Typography variant="h4" component="h1">
+    <Box sx={{ maxWidth: 800, mx: 'auto', p: 3 }}>
+      <Box sx={{ mb: 3 }}>
+        <Typography variant="h4" component="h1" gutterBottom>
           Create New Recording
+        </Typography>
+        <Typography variant="body1" color="text.secondary">
+          Set up a new manual recording by providing the stream URL and recording details.
         </Typography>
       </Box>
 
@@ -71,7 +77,7 @@ const CreateRecording: React.FC = () => {
         <CardContent>
           <form onSubmit={handleSubmit(onSubmit)}>
             <Grid container spacing={3}>
-              <Grid item xs={12}>
+              <Grid size={{ xs: 12 }}>
                 <Controller
                   name="title"
                   control={control}
@@ -89,7 +95,7 @@ const CreateRecording: React.FC = () => {
                 />
               </Grid>
 
-              <Grid item xs={12}>
+              <Grid size={{ xs: 12 }}>
                 <Controller
                   name="description"
                   control={control}
@@ -100,13 +106,15 @@ const CreateRecording: React.FC = () => {
                       fullWidth
                       multiline
                       rows={3}
-                      placeholder="Additional details about the recording..."
+                      error={!!errors.description}
+                      helperText={errors.description?.message}
+                      placeholder="Add any additional details about this recording..."
                     />
                   )}
                 />
               </Grid>
 
-              <Grid item xs={12}>
+              <Grid size={{ xs: 12 }}>
                 <Controller
                   name="stream_url"
                   control={control}
@@ -114,8 +122,8 @@ const CreateRecording: React.FC = () => {
                     required: 'Stream URL is required',
                     pattern: {
                       value: /^https?:\/\/.+/,
-                      message: 'Please enter a valid HTTP/HTTPS URL'
-                    }
+                      message: 'Please enter a valid URL starting with http:// or https://',
+                    },
                   }}
                   render={({ field }) => (
                     <TextField
@@ -123,14 +131,14 @@ const CreateRecording: React.FC = () => {
                       label="Stream URL"
                       fullWidth
                       error={!!errors.stream_url}
-                      helperText={errors.stream_url?.message || 'Enter the URL of the stream to record'}
+                      helperText={errors.stream_url?.message}
                       placeholder="https://example.com/stream.m3u8"
                     />
                   )}
                 />
               </Grid>
 
-              <Grid item xs={12} sm={6}>
+              <Grid size={{ xs: 12, sm: 6 }}>
                 <Controller
                   name="quality"
                   control={control}
@@ -139,15 +147,17 @@ const CreateRecording: React.FC = () => {
                       <InputLabel>Quality</InputLabel>
                       <Select {...field} label="Quality">
                         <MenuItem value="best">Best Available</MenuItem>
-                        <MenuItem value="good">Good</MenuItem>
-                        <MenuItem value="medium">Medium</MenuItem>
+                        <MenuItem value="1080p">1080p</MenuItem>
+                        <MenuItem value="720p">720p</MenuItem>
+                        <MenuItem value="480p">480p</MenuItem>
+                        <MenuItem value="360p">360p</MenuItem>
                       </Select>
                     </FormControl>
                   )}
                 />
               </Grid>
 
-              <Grid item xs={12} sm={6}>
+              <Grid size={{ xs: 12, sm: 6 }}>
                 <Controller
                   name="format"
                   control={control}
@@ -164,28 +174,28 @@ const CreateRecording: React.FC = () => {
                 />
               </Grid>
 
-              <Grid item xs={12}>
+              <Grid size={{ xs: 12 }}>
                 <Alert severity="info">
                   The recording will be created and can be started immediately or scheduled for later.
                   Make sure the stream URL is accessible and supports the selected format.
                 </Alert>
               </Grid>
 
-              <Grid item xs={12}>
+              <Grid size={{ xs: 12 }}>
                 <Box sx={{ display: 'flex', gap: 2, justifyContent: 'flex-end' }}>
                   <Button
                     variant="outlined"
-                    onClick={() => navigate('/recordings')}
+                    onClick={handleCancel}
+                    disabled={createRecordingMutation.isPending}
                   >
                     Cancel
                   </Button>
                   <Button
                     type="submit"
                     variant="contained"
-                    startIcon={<SaveIcon />}
-                    disabled={createMutation.isPending}
+                    disabled={createRecordingMutation.isPending}
                   >
-                    {createMutation.isPending ? 'Creating...' : 'Create Recording'}
+                    {createRecordingMutation.isPending ? 'Creating...' : 'Create Recording'}
                   </Button>
                 </Box>
               </Grid>

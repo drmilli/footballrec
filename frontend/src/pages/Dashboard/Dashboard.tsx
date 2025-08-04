@@ -15,13 +15,13 @@ import {
   IconButton,
   Divider,
   Paper,
+  ListItemButton,
 } from '@mui/material';
 import {
   VideoCall as RecordingIcon,
   SportsFootball as MatchIcon,
   Schedule as ScheduleIcon,
   VideoLibrary as VideoIcon,
-  PlayArrow as PlayIcon,
   Stop as StopIcon,
   Add as AddIcon,
   Refresh as RefreshIcon,
@@ -50,11 +50,6 @@ const Dashboard: React.FC = () => {
   const { data: upcomingMatches } = useQuery({
     queryKey: ['upcomingMatches'],
     queryFn: () => apiService.getUpcomingMatches(5),
-  });
-
-  const { data: upcomingSchedules } = useQuery({
-    queryKey: ['upcomingSchedules'],
-    queryFn: () => apiService.getUpcomingSchedules(5),
   });
 
   const { data: videos } = useQuery({
@@ -103,58 +98,61 @@ const Dashboard: React.FC = () => {
     return `${minutes}m ${seconds % 60}s`;
   };
 
+  const formatFileSize = (bytes: number) => {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  };
+
   return (
-    <Box>
+    <Box sx={{ flexGrow: 1, p: 3 }}>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
         <Typography variant="h4" component="h1">
           Dashboard
         </Typography>
-        <Box sx={{ display: 'flex', gap: 1 }}>
-          <Button
-            variant="contained"
-            startIcon={<AddIcon />}
-            onClick={() => navigate('/recordings/new')}
-          >
-            New Recording
-          </Button>
-          <Button
-            variant="outlined"
-            startIcon={<RefreshIcon />}
-            onClick={() => window.location.reload()}
-          >
-            Refresh
-          </Button>
-        </Box>
+        <Button
+          variant="contained"
+          startIcon={<RefreshIcon />}
+          onClick={() => window.location.reload()}
+        >
+          Refresh
+        </Button>
       </Box>
 
       <Grid container spacing={3}>
         {/* Statistics Cards */}
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <Card>
             <CardContent>
               <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
                 <RecordingIcon color="primary" sx={{ mr: 1 }} />
-                <Typography variant="h6">Recordings</Typography>
+                <Typography variant="h6" component="div">
+                  Active Recordings
+                </Typography>
               </Box>
               <Typography variant="h4" color="primary">
-                {recordings?.count || 0}
+                {activeRecordings?.data?.length || 0}
               </Typography>
               <Typography variant="body2" color="text.secondary">
-                {activeRecordings?.data?.length || 0} active
+                currently recording
               </Typography>
             </CardContent>
           </Card>
         </Grid>
 
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <Card>
             <CardContent>
               <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
                 <MatchIcon color="primary" sx={{ mr: 1 }} />
-                <Typography variant="h6">Matches</Typography>
+                <Typography variant="h6" component="div">
+                  Upcoming Matches
+                </Typography>
               </Box>
               <Typography variant="h4" color="primary">
-                {upcomingMatches?.count || 0}
+                {upcomingMatches?.data?.length || 0}
               </Typography>
               <Typography variant="body2" color="text.secondary">
                 upcoming
@@ -163,12 +161,14 @@ const Dashboard: React.FC = () => {
           </Card>
         </Grid>
 
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <Card>
             <CardContent>
               <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
                 <ScheduleIcon color="primary" sx={{ mr: 1 }} />
-                <Typography variant="h6">Schedules</Typography>
+                <Typography variant="h6" component="div">
+                  Scheduled
+                </Typography>
               </Box>
               <Typography variant="h4" color="primary">
                 {scheduleStats?.data?.pending_schedules || 0}
@@ -180,15 +180,17 @@ const Dashboard: React.FC = () => {
           </Card>
         </Grid>
 
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <Card>
             <CardContent>
               <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
                 <VideoIcon color="primary" sx={{ mr: 1 }} />
-                <Typography variant="h6">Videos</Typography>
+                <Typography variant="h6" component="div">
+                  Videos
+                </Typography>
               </Box>
               <Typography variant="h4" color="primary">
-                {videos?.count || 0}
+                {videos?.data?.length || 0}
               </Typography>
               <Typography variant="body2" color="text.secondary">
                 available
@@ -199,7 +201,7 @@ const Dashboard: React.FC = () => {
 
         {/* Active Recordings */}
         {activeRecordings?.data && activeRecordings.data.length > 0 && (
-          <Grid item xs={12}>
+          <Grid size={{ xs: 12 }}>
             <Card>
               <CardContent>
                 <Typography variant="h6" gutterBottom>
@@ -208,29 +210,44 @@ const Dashboard: React.FC = () => {
                 <List>
                   {activeRecordings.data.map((recording, index) => (
                     <React.Fragment key={recording.id}>
-                      <ListItem
-                        secondaryAction={
-                          <IconButton
-                            edge="end"
-                            onClick={() => handleStopRecording(recording.id)}
-                            color="error"
-                          >
-                            <StopIcon />
-                          </IconButton>
-                        }
-                      >
+                      <ListItem>
                         <ListItemIcon>
                           <RecordingIcon color="error" />
                         </ListItemIcon>
                         <ListItemText
                           primary={recording.title}
-                          secondary={`Recording for ${formatDuration(recording.duration)}`}
+                          secondary={
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 1 }}>
+                              <Chip
+                                label="recording"
+                                color="error"
+                                size="small"
+                              />
+                              {recording.startTime && (
+                                <Typography variant="body2" color="text.secondary">
+                                  Started: {new Date(recording.startTime).toLocaleTimeString()}
+                                </Typography>
+                              )}
+                              {recording.duration > 0 && (
+                                <Typography variant="body2" color="text.secondary">
+                                  Duration: {formatDuration(recording.duration)}
+                                </Typography>
+                              )}
+                            </Box>
+                          }
                         />
-                        <Box sx={{ width: 100, mr: 2 }}>
-                          <LinearProgress color="error" />
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                          <LinearProgress sx={{ width: 100, mr: 2 }} />
+                          <IconButton
+                            color="error"
+                            onClick={() => handleStopRecording(recording.id)}
+                            size="small"
+                          >
+                            <StopIcon />
+                          </IconButton>
                         </Box>
                       </ListItem>
-                      {index < activeRecordings.data.length - 1 && <Divider />}
+                      {activeRecordings.data && index < activeRecordings.data.length - 1 && <Divider />}
                     </React.Fragment>
                   ))}
                 </List>
@@ -240,12 +257,17 @@ const Dashboard: React.FC = () => {
         )}
 
         {/* Recent Recordings */}
-        <Grid item xs={12} md={6}>
+        <Grid size={{ xs: 12, md: 6 }}>
           <Card sx={{ height: '100%' }}>
             <CardContent>
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                <Typography variant="h6">Recent Recordings</Typography>
-                <Button size="small" onClick={() => navigate('/recordings')}>
+                <Typography variant="h6">
+                  Recent Recordings
+                </Typography>
+                <Button
+                  size="small"
+                  onClick={() => navigate('/recordings')}
+                >
                   View All
                 </Button>
               </Box>
@@ -255,8 +277,7 @@ const Dashboard: React.FC = () => {
                 <List>
                   {recordings?.data?.slice(0, 5).map((recording, index) => (
                     <React.Fragment key={recording.id}>
-                      <ListItem
-                        button
+                      <ListItemButton
                         onClick={() => navigate(`/recordings/${recording.id}`)}
                       >
                         <ListItemIcon>
@@ -264,15 +285,28 @@ const Dashboard: React.FC = () => {
                         </ListItemIcon>
                         <ListItemText
                           primary={recording.title}
-                          secondary={`${apiService.formatDateTime(recording.created_at)} • ${recording.format.toUpperCase()}`}
+                          secondary={
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.5 }}>
+                              <Chip
+                                label={recording.status}
+                                color={getStatusColor(recording.status) as any}
+                                size="small"
+                              />
+                              {recording.duration > 0 && (
+                                <Typography variant="body2" color="text.secondary">
+                                  {formatDuration(recording.duration)}
+                                </Typography>
+                              )}
+                              {recording.file_size > 0 && (
+                                <Typography variant="body2" color="text.secondary">
+                                  {formatFileSize(recording.file_size)}
+                                </Typography>
+                              )}
+                            </Box>
+                          }
                         />
-                        <Chip
-                          label={recording.status}
-                          color={getStatusColor(recording.status) as any}
-                          size="small"
-                        />
-                      </ListItem>
-                      {index < (recordings?.data?.length || 0) - 1 && <Divider />}
+                      </ListItemButton>
+                      {recordings?.data && index < recordings.data.length - 1 && <Divider />}
                     </React.Fragment>
                   ))}
                   {(!recordings?.data || recordings.data.length === 0) && (
@@ -287,20 +321,24 @@ const Dashboard: React.FC = () => {
         </Grid>
 
         {/* Upcoming Matches */}
-        <Grid item xs={12} md={6}>
+        <Grid size={{ xs: 12, md: 6 }}>
           <Card sx={{ height: '100%' }}>
             <CardContent>
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                <Typography variant="h6">Upcoming Matches</Typography>
-                <Button size="small" onClick={() => navigate('/matches')}>
+                <Typography variant="h6">
+                  Upcoming Matches
+                </Typography>
+                <Button
+                  size="small"
+                  onClick={() => navigate('/matches')}
+                >
                   View All
                 </Button>
               </Box>
               <List>
                 {upcomingMatches?.data?.slice(0, 5).map((match, index) => (
                   <React.Fragment key={match.id}>
-                    <ListItem
-                      button
+                    <ListItemButton
                       onClick={() => navigate(`/matches/${match.id}`)}
                     >
                       <ListItemIcon>
@@ -308,13 +346,23 @@ const Dashboard: React.FC = () => {
                       </ListItemIcon>
                       <ListItemText
                         primary={`${match.home_team} vs ${match.away_team}`}
-                        secondary={`${apiService.formatDateTime(match.match_date)} • ${match.competition}`}
+                        secondary={
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.5 }}>
+                            <Typography variant="body2" color="text.secondary">
+                              {new Date(match.match_date).toLocaleDateString()} at{' '}
+                              {new Date(match.match_date).toLocaleTimeString()}
+                            </Typography>
+                            {match.auto_record && (
+                              <Chip label="Auto Record" color="success" size="small" />
+                            )}
+                            {match.competition && (
+                              <Chip label={match.competition} variant="outlined" size="small" />
+                            )}
+                          </Box>
+                        }
                       />
-                      {match.auto_record && (
-                        <Chip label="Auto Record" color="primary" size="small" />
-                      )}
-                    </ListItem>
-                    {index < (upcomingMatches?.data?.length || 0) - 1 && <Divider />}
+                    </ListItemButton>
+                    {upcomingMatches?.data && index < upcomingMatches.data.length - 1 && <Divider />}
                   </React.Fragment>
                 ))}
                 {(!upcomingMatches?.data || upcomingMatches.data.length === 0) && (
@@ -328,30 +376,30 @@ const Dashboard: React.FC = () => {
         </Grid>
 
         {/* Quick Actions */}
-        <Grid item xs={12}>
+        <Grid size={{ xs: 12 }}>
           <Paper sx={{ p: 2 }}>
             <Typography variant="h6" gutterBottom>
               Quick Actions
             </Typography>
-            <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+            <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
               <Button
-                variant="outlined"
+                variant="contained"
                 startIcon={<AddIcon />}
-                onClick={() => navigate('/recordings/new')}
+                onClick={() => navigate('/recordings/create')}
               >
                 New Recording
               </Button>
               <Button
                 variant="outlined"
                 startIcon={<AddIcon />}
-                onClick={() => navigate('/matches/new')}
+                onClick={() => navigate('/matches/create')}
               >
                 Add Match
               </Button>
               <Button
                 variant="outlined"
-                startIcon={<AddIcon />}
-                onClick={() => navigate('/schedules/new')}
+                startIcon={<ScheduleIcon />}
+                onClick={() => navigate('/schedules/create')}
               >
                 Create Schedule
               </Button>
