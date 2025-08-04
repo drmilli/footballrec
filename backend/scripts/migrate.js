@@ -1,10 +1,33 @@
 const database = require('../config/database');
 const logger = require('../utils/logger');
 
+// Check if we're using SQLite
+const isSQLite = process.env.DATABASE_URL && process.env.DATABASE_URL.startsWith('sqlite://');
+
 const migrations = [
   {
     name: 'create_recordings_table',
-    sql: `
+    sql: isSQLite ? `
+      CREATE TABLE IF NOT EXISTS recordings (
+        id TEXT PRIMARY KEY,
+        title TEXT NOT NULL,
+        description TEXT,
+        stream_url TEXT NOT NULL,
+        status TEXT DEFAULT 'pending',
+        file_path TEXT,
+        s3_key TEXT,
+        s3_url TEXT,
+        duration INTEGER DEFAULT 0,
+        file_size INTEGER DEFAULT 0,
+        format TEXT DEFAULT 'mp4',
+        quality TEXT DEFAULT 'auto',
+        created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+        started_at TEXT,
+        completed_at TEXT,
+        error_message TEXT,
+        metadata TEXT DEFAULT '{}'
+      );
+    ` : `
       CREATE TABLE IF NOT EXISTS recordings (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
         title VARCHAR(255) NOT NULL,
@@ -28,7 +51,24 @@ const migrations = [
   },
   {
     name: 'create_matches_table',
-    sql: `
+    sql: isSQLite ? `
+      CREATE TABLE IF NOT EXISTS matches (
+        id TEXT PRIMARY KEY,
+        external_id TEXT UNIQUE,
+        home_team TEXT NOT NULL,
+        away_team TEXT NOT NULL,
+        competition TEXT,
+        match_date TEXT NOT NULL,
+        status TEXT DEFAULT 'scheduled',
+        stream_url TEXT,
+        recording_id TEXT,
+        auto_record INTEGER DEFAULT 0,
+        created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+        updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
+        metadata TEXT DEFAULT '{}',
+        FOREIGN KEY (recording_id) REFERENCES recordings(id)
+      );
+    ` : `
       CREATE TABLE IF NOT EXISTS matches (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
         external_id VARCHAR(100) UNIQUE,
@@ -48,7 +88,23 @@ const migrations = [
   },
   {
     name: 'create_schedules_table',
-    sql: `
+    sql: isSQLite ? `
+      CREATE TABLE IF NOT EXISTS schedules (
+        id TEXT PRIMARY KEY,
+        match_id TEXT,
+        recording_id TEXT,
+        scheduled_start TEXT NOT NULL,
+        scheduled_end TEXT,
+        status TEXT DEFAULT 'pending',
+        cron_expression TEXT,
+        auto_generated INTEGER DEFAULT 0,
+        created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+        executed_at TEXT,
+        metadata TEXT DEFAULT '{}',
+        FOREIGN KEY (match_id) REFERENCES matches(id),
+        FOREIGN KEY (recording_id) REFERENCES recordings(id)
+      );
+    ` : `
       CREATE TABLE IF NOT EXISTS schedules (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
         match_id UUID REFERENCES matches(id),
@@ -66,7 +122,17 @@ const migrations = [
   },
   {
     name: 'create_settings_table',
-    sql: `
+    sql: isSQLite ? `
+      CREATE TABLE IF NOT EXISTS settings (
+        id TEXT PRIMARY KEY,
+        key TEXT UNIQUE NOT NULL,
+        value TEXT NOT NULL,
+        description TEXT,
+        category TEXT DEFAULT 'general',
+        created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+        updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+      );
+    ` : `
       CREATE TABLE IF NOT EXISTS settings (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
         key VARCHAR(100) UNIQUE NOT NULL,
@@ -80,7 +146,15 @@ const migrations = [
   },
   {
     name: 'create_indexes',
-    sql: `
+    sql: isSQLite ? `
+      CREATE INDEX IF NOT EXISTS idx_recordings_status ON recordings(status);
+      CREATE INDEX IF NOT EXISTS idx_recordings_created_at ON recordings(created_at);
+      CREATE INDEX IF NOT EXISTS idx_matches_match_date ON matches(match_date);
+      CREATE INDEX IF NOT EXISTS idx_matches_status ON matches(status);
+      CREATE INDEX IF NOT EXISTS idx_schedules_scheduled_start ON schedules(scheduled_start);
+      CREATE INDEX IF NOT EXISTS idx_schedules_status ON schedules(status);
+      CREATE INDEX IF NOT EXISTS idx_settings_key ON settings(key);
+    ` : `
       CREATE INDEX IF NOT EXISTS idx_recordings_status ON recordings(status);
       CREATE INDEX IF NOT EXISTS idx_recordings_created_at ON recordings(created_at);
       CREATE INDEX IF NOT EXISTS idx_matches_match_date ON matches(match_date);
@@ -105,7 +179,16 @@ const runMigrations = async () => {
     // Run each migration
     for (const migration of migrations) {
       logger.info(`Running migration: ${migration.name}`);
-      await database.query(migration.sql);
+      
+      // Split SQL statements for SQLite
+      const statements = isSQLite ? migration.sql.split(';').filter(stmt => stmt.trim()) : [migration.sql];
+      
+      for (const statement of statements) {
+        if (statement.trim()) {
+          await database.query(statement.trim());
+        }
+      }
+      
       logger.info(`✅ Migration completed: ${migration.name}`);
     }
 
@@ -152,12 +235,20 @@ const insertDefaultSettings = async () => {
 
   for (const setting of defaultSettings) {
     try {
-      await database.query(
-        `INSERT INTO settings (key, value, description, category) 
-         VALUES ($1, $2, $3, $4) 
-         ON CONFLICT (key) DO NOTHING`,
-        [setting.key, setting.value, setting.description, setting.category]
-      );
+      if (isSQLite) {
+        await database.query(
+          `INSERT OR IGNORE INTO settings (id, key, value, description, category) 
+           VALUES (?, ?, ?, ?, ?)`,
+          [require('crypto').randomUUID(), setting.key, setting.value, setting.description, setting.category]
+        );
+      } else {
+        await database.query(
+          `INSERT INTO settings (key, value, description, category) 
+           VALUES ($1, $2, $3, $4) 
+           ON CONFLICT (key) DO NOTHING`,
+          [setting.key, setting.value, setting.description, setting.category]
+        );
+      }
     } catch (error) {
       logger.warn(`Failed to insert setting ${setting.key}:`, error.message);
     }
