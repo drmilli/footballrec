@@ -27,6 +27,7 @@ import {
   Settings as SettingsIcon,
   ChevronLeft as ChevronLeftIcon,
   Notifications as NotificationsIcon,
+  LiveTv as StreamIcon,
 } from '@mui/icons-material';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
@@ -93,6 +94,11 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       text: 'Videos',
       icon: <VideoIcon />,
       path: '/videos',
+    },
+    {
+      text: 'Stream Sources',
+      icon: <StreamIcon />,
+      path: '/streams',
     },
     {
       text: 'Settings',

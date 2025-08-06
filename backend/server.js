@@ -7,12 +7,14 @@ require('dotenv').config();
 const logger = require('./utils/logger');
 const database = require('./config/database');
 const schedulerService = require('./services/schedulerService');
+const swagger = require('./config/swagger');
 
 // Import routes
 const recordingRoutes = require('./routes/recordingRoutes');
 const matchRoutes = require('./routes/matchRoutes');
 const videoRoutes = require('./routes/videoRoutes');
 const scheduleRoutes = require('./routes/scheduleRoutes');
+const streamSourceRoutes = require('./routes/streamSourceRoutes');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -46,6 +48,9 @@ app.use((req, res, next) => {
   next();
 });
 
+// Swagger API documentation
+app.use('/api-docs', swagger.serve, swagger.setup);
+
 // Health check endpoint
 app.get('/health', (req, res) => {
   res.status(200).json({ 
@@ -60,6 +65,7 @@ app.use('/api/recordings', recordingRoutes);
 app.use('/api/matches', matchRoutes);
 app.use('/api/videos', videoRoutes);
 app.use('/api/schedules', scheduleRoutes);
+app.use('/api/stream-sources', streamSourceRoutes);
 
 // Error handling middleware
 app.use((err, req, res, next) => {
