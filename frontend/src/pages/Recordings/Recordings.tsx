@@ -130,8 +130,12 @@ const Recordings: React.FC = () => {
 
   const handleDownload = async (id: string) => {
     try {
-      const downloadUrl = await apiService.getDownloadUrl(id);
-      window.open(downloadUrl.url, '_blank');
+      const response = await apiService.getDownloadUrl(id);
+      if (response.success && response.data) {
+        window.open(response.data.downloadUrl, '_blank');
+      } else {
+        throw new Error(response.error || 'Failed to get download URL');
+      }
     } catch (error) {
       showNotification('Failed to generate download URL', 'error');
     }
@@ -244,7 +248,7 @@ const Recordings: React.FC = () => {
         <CardContent>
           {isLoading ? (
             <LinearProgress />
-          ) : recordings && recordings.length > 0 ? (
+          ) : recordings && recordings.success && recordings.data && recordings.data.length > 0 ? (
             <TableContainer>
               <Table>
                 <TableHead>
@@ -258,7 +262,7 @@ const Recordings: React.FC = () => {
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {recordings.map((recording) => (
+                  {recordings.data.map((recording) => (
                     <TableRow key={recording.id} hover>
                       <TableCell>
                         <Box>

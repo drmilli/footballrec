@@ -106,6 +106,11 @@ class ApiService {
     return response.data;
   }
 
+  // Alias for compatibility with existing code
+  async getDownloadUrl(id: string, expires?: number): Promise<ApiResponse<DownloadUrl>> {
+    return this.generateDownloadUrl(id, expires);
+  }
+
   async generateStreamUrl(id: string, expires?: number): Promise<ApiResponse<StreamUrl>> {
     const response = await this.api.get(`/api/recordings/${id}/stream`, {
       params: { expires }
