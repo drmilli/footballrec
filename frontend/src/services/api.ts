@@ -324,6 +324,32 @@ class ApiService {
       return `${diffDays} days`;
     }
   }
+
+  // Stream Sources API
+  async getStreamSources(): Promise<any[]> {
+    const response = await this.api.get('/api/stream-sources');
+    return response.data.data;
+  }
+
+  async getAllLiveStreams(): Promise<any[]> {
+    const response = await this.api.get('/api/stream-sources/live');
+    return response.data.data;
+  }
+
+  async getStreamsBySource(sourceId: string): Promise<any[]> {
+    const response = await this.api.get(`/api/stream-sources/${sourceId}/streams`);
+    return response.data.data;
+  }
+
+  async testStreamSource(sourceId: string): Promise<any> {
+    const response = await this.api.get(`/api/stream-sources/${sourceId}/test`);
+    return response.data;
+  }
+
+  async getStreamById(sourceId: string, streamId: string): Promise<any> {
+    const response = await this.api.get(`/api/stream-sources/${sourceId}/streams/${streamId}`);
+    return response.data.data;
+  }
 }
 
 const apiService = new ApiService();

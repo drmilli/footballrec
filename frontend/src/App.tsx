@@ -23,6 +23,7 @@ import CreateSchedule from './pages/Schedules/CreateSchedule';
 import Videos from './pages/Videos/Videos';
 import VideoPlayer from './pages/Videos/VideoPlayer';
 import Settings from './pages/Settings/Settings';
+import StreamSources from './pages/StreamSources/StreamSources';
 
 // Create a client
 const queryClient = new QueryClient({
@@ -146,6 +147,9 @@ function App() {
 
                     {/* Settings */}
                     <Route path="/settings" element={<Settings />} />
+
+                    {/* Stream Sources */}
+                    <Route path="/streams" element={<StreamSources />} />
 
                     {/* 404 */}
                     <Route path="*" element={<Dashboard />} />
