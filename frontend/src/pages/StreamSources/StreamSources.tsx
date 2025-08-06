@@ -230,12 +230,12 @@ const StreamSources: React.FC = () => {
       {selectedTab === 0 && (
         <Grid container spacing={3}>
           {sourcesLoading ? (
-            <Grid item xs={12}>
+            <Grid size={{ xs: 12 }}>
               <LinearProgress />
             </Grid>
           ) : sources && sources.length > 0 ? (
             sources.map((source: StreamSource) => (
-              <Grid item xs={12} sm={6} md={4} key={source.id}>
+              <Grid size={{ xs: 12, sm: 6, md: 4 }} key={source.id}>
                 <Card>
                   <CardContent>
                     <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
@@ -284,7 +284,7 @@ const StreamSources: React.FC = () => {
               </Grid>
             ))
           ) : (
-            <Grid item xs={12}>
+            <Grid size={{ xs: 12 }}>
               <Alert severity="info">
                 No stream sources available. Please check your configuration.
               </Alert>
@@ -332,7 +332,7 @@ const StreamSources: React.FC = () => {
           ) : liveStreams && liveStreams.length > 0 ? (
             <Grid container spacing={2}>
               {liveStreams.map((stream: Stream) => (
-                <Grid item xs={12} key={stream.id}>
+                <Grid size={{ xs: 12 }} key={stream.id}>
                   <Card>
                     <CardContent>
                       <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
