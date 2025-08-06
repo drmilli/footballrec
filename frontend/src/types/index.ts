@@ -196,6 +196,7 @@ export interface FilterOptions {
   search?: string;
   status?: string;
   competition?: string;
+  quality?: string;
   dateFrom?: string;
   dateTo?: string;
   limit?: number;

@@ -327,6 +327,7 @@ const StreamSources: React.FC = () => {
           ) : liveStreams && liveStreams.length > 0 ? (
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
               {liveStreams.map((stream: Stream) => (
+
 <Box key={stream.id}>
   <Card>
     <CardContent>

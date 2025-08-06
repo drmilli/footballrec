@@ -236,7 +236,7 @@ class ApiService {
   }
 
   // Video endpoints
-  async getVideos(filters?: FilterOptions): Promise<ApiResponse<Recording[]>> {
+  async getVideos(filters?: FilterOptions): Promise<PaginatedResponse<Recording>> {
     const response = await this.api.get('/api/videos', { params: filters });
     return response.data;
   }
