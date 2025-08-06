@@ -327,67 +327,68 @@ const StreamSources: React.FC = () => {
           ) : liveStreams && liveStreams.length > 0 ? (
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
               {liveStreams.map((stream: Stream) => (
-                <Box key={stream.id}>
-                  <Card>
-                    <CardContent>
-                      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                        <Box sx={{ flexGrow: 1 }}>
-                          <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                            {getSourceIcon(stream.source)}
-                            <Typography variant="h6" sx={{ ml: 1 }}>
-                              {stream.title}
-                            </Typography>
-                            <Chip
-                              label={stream.status}
-                              color={stream.status === 'live' ? 'error' : 'default'}
-                              size="small"
-                              sx={{ ml: 2 }}
-                            />
-                          </Box>
-                          
-                          {stream.competition && (
-                            <Typography variant="body2" color="text.secondary">
-                              {stream.competition}
-                            </Typography>
-                          )}
-                          
-                          {stream.teams && stream.teams.length > 0 && (
-                            <Typography variant="body2" color="text.secondary">
-                              {stream.teams.join(' vs ')}
-                            </Typography>
-                          )}
-                          
-                          {stream.channel && (
-                            <Typography variant="body2" color="text.secondary">
-                              Channel: {stream.channel}
-                            </Typography>
-                          )}
-                          
-                          <Typography variant="caption" color="text.secondary">
-                            Quality: {stream.quality.join(', ')}
-                          </Typography>
-                        </Box>
-                        
-                        <Box sx={{ display: 'flex', gap: 1 }}>
-                          <IconButton
-                            color="primary"
-                            onClick={() => window.open(stream.url, '_blank')}
-                            title="Open Stream"
-                          >
-                            <PlayIcon />
-                          </IconButton>
-                          <IconButton
-                            color="secondary"
-                            onClick={() => handleRecordStream(stream)}
-                            title="Record Stream"
-                          >
-                            <RecordIcon />
-                          </IconButton>
-                        </Box>
-                      </Box>
-                    </CardContent>
-                  </Card>
-                </Box>
+
+<Box key={stream.id}>
+  <Card>
+    <CardContent>
+      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <Box sx={{ flexGrow: 1 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+            {getSourceIcon(stream.source)}
+            <Typography variant="h6" sx={{ ml: 1 }}>
+              {stream.title}
+            </Typography>
+            <Chip
+              label={stream.status}
+              color={stream.status === 'live' ? 'error' : 'default'}
+              size="small"
+              sx={{ ml: 2 }}
+            />
+          </Box>
+          
+          {stream.competition && (
+            <Typography variant="body2" color="text.secondary">
+              {stream.competition}
+            </Typography>
+          )}
+          
+          {stream.teams && stream.teams.length > 0 && (
+            <Typography variant="body2" color="text.secondary">
+              {stream.teams.join(' vs ')}
+            </Typography>
+          )}
+          
+          {stream.channel && (
+            <Typography variant="body2" color="text.secondary">
+              Channel: {stream.channel}
+            </Typography>
+          )}
+          
+          <Typography variant="caption" color="text.secondary">
+            Quality: {stream.quality.join(', ')}
+          </Typography>
+        </Box>
+        
+        <Box sx={{ display: 'flex', gap: 1 }}>
+          <IconButton
+            color="primary"
+            onClick={() => window.open(stream.url, '_blank')}
+            title="Open Stream"
+          >
+            <PlayIcon />
+          </IconButton>
+          <IconButton
+            color="secondary"
+            onClick={() => handleRecordStream(stream)}
+            title="Record Stream"
+          >
+            <RecordIcon />
+          </IconButton>
+        </Box>
+      </Box>
+    </CardContent>
+  </Card>
+</Box>
               ))}
             </Box>
           ) : (
