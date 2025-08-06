@@ -6,8 +6,6 @@ import {
   CardContent,
   Button,
   Chip,
-  Grid,
-  Divider,
   IconButton,
   Alert,
   LinearProgress,
@@ -28,11 +26,9 @@ import {
   Delete as DeleteIcon,
   Refresh as RefreshIcon,
   VideoLibrary as VideoIcon,
-  Schedule as ScheduleIcon,
-  CloudUpload as CloudIcon,
 } from '@mui/icons-material';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation } from '@tanstack/react-query';
 import { useNotification } from '../../contexts/NotificationContext';
 import apiService from '../../services/api';
 
@@ -40,7 +36,6 @@ const RecordingDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { showNotification } = useNotification();
-  const queryClient = useQueryClient();
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
   // Fetch recording details
@@ -86,8 +81,12 @@ const RecordingDetail: React.FC = () => {
 
   const handleDownload = async () => {
     try {
-      const downloadUrl = await apiService.getDownloadUrl(id!);
-      window.open(downloadUrl.url, '_blank');
+      const response = await apiService.getDownloadUrl(id!);
+      if (response.success && response.data) {
+        window.open(response.data.downloadUrl, '_blank');
+      } else {
+        throw new Error(response.error || 'Failed to get download URL');
+      }
     } catch (error) {
       showNotification('Failed to generate download URL', 'error');
     }
@@ -162,7 +161,7 @@ const RecordingDetail: React.FC = () => {
     );
   }
 
-  if (!recording) {
+  if (!recording || !recording.success || !recording.data) {
     return (
       <Box>
         <Button
@@ -179,6 +178,8 @@ const RecordingDetail: React.FC = () => {
     );
   }
 
+  const recordingData = recording.data;
+
   return (
     <Box>
       {/* Header */}
@@ -188,11 +189,11 @@ const RecordingDetail: React.FC = () => {
             <BackIcon />
           </IconButton>
           <Typography variant="h4" component="h1">
-            {recording.title}
+            {recordingData.title}
           </Typography>
           <Chip
-            label={recording.status}
-            color={getStatusColor(recording.status)}
+            label={recordingData.status}
+            color={getStatusColor(recordingData.status)}
             size="medium"
           />
         </Box>
@@ -204,7 +205,7 @@ const RecordingDetail: React.FC = () => {
           >
             Refresh
           </Button>
-          {recording.status === 'pending' && (
+          {recordingData.status === 'pending' && (
             <Button
               variant="contained"
               startIcon={<PlayIcon />}
@@ -214,7 +215,7 @@ const RecordingDetail: React.FC = () => {
               Start Recording
             </Button>
           )}
-          {recording.status === 'recording' && (
+          {recordingData.status === 'recording' && (
             <Button
               variant="contained"
               color="error"
@@ -225,7 +226,7 @@ const RecordingDetail: React.FC = () => {
               Stop Recording
             </Button>
           )}
-          {recording.status === 'completed' && recording.s3_url && (
+          {recordingData.status === 'completed' && recordingData.s3_url && (
             <>
               <Button
                 variant="outlined"
@@ -254,52 +255,52 @@ const RecordingDetail: React.FC = () => {
         </Box>
       </Box>
 
-      <Grid container spacing={3}>
+      <Box sx={{ display: 'flex', gap: 3, flexDirection: { xs: 'column', md: 'row' } }}>
         {/* Recording Information */}
-        <Grid item xs={12} md={8}>
+        <Box sx={{ flex: 2 }}>
           <Card>
             <CardContent>
               <Typography variant="h6" gutterBottom>
                 Recording Information
               </Typography>
-              <Grid container spacing={2}>
-                <Grid item xs={12} sm={6}>
+              <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 2 }}>
+                <Box>
                   <Typography variant="subtitle2" color="text.secondary">
                     Title
                   </Typography>
                   <Typography variant="body1" gutterBottom>
-                    {recording.title}
+                    {recordingData.title}
                   </Typography>
-                </Grid>
-                <Grid item xs={12} sm={6}>
+                </Box>
+                <Box>
                   <Typography variant="subtitle2" color="text.secondary">
                     Status
                   </Typography>
                   <Chip
-                    label={recording.status}
-                    color={getStatusColor(recording.status)}
+                    label={recordingData.status}
+                    color={getStatusColor(recordingData.status)}
                     size="small"
                   />
-                </Grid>
-                {recording.description && (
-                  <Grid item xs={12}>
+                </Box>
+                {recordingData.description && (
+                  <Box sx={{ gridColumn: { xs: '1', sm: '1 / -1' } }}>
                     <Typography variant="subtitle2" color="text.secondary">
                       Description
                     </Typography>
                     <Typography variant="body1" gutterBottom>
-                      {recording.description}
+                      {recordingData.description}
                     </Typography>
-                  </Grid>
+                  </Box>
                 )}
-                <Grid item xs={12}>
+                <Box sx={{ gridColumn: { xs: '1', sm: '1 / -1' } }}>
                   <Typography variant="subtitle2" color="text.secondary">
                     Stream URL
                   </Typography>
                   <Typography variant="body2" sx={{ wordBreak: 'break-all' }}>
-                    {recording.stream_url}
+                    {recordingData.stream_url}
                   </Typography>
-                </Grid>
-              </Grid>
+                </Box>
+              </Box>
             </CardContent>
           </Card>
 
@@ -309,55 +310,55 @@ const RecordingDetail: React.FC = () => {
               <Typography variant="h6" gutterBottom>
                 Technical Details
               </Typography>
-              <Grid container spacing={2}>
-                <Grid item xs={12} sm={6}>
+              <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 2 }}>
+                <Box>
                   <Typography variant="subtitle2" color="text.secondary">
                     Format
                   </Typography>
                   <Typography variant="body1">
-                    {recording.format || 'N/A'}
+                    {recordingData.format || 'N/A'}
                   </Typography>
-                </Grid>
-                <Grid item xs={12} sm={6}>
+                </Box>
+                <Box>
                   <Typography variant="subtitle2" color="text.secondary">
                     Quality
                   </Typography>
                   <Typography variant="body1">
-                    {recording.quality || 'N/A'}
+                    {recordingData.quality || 'N/A'}
                   </Typography>
-                </Grid>
-                <Grid item xs={12} sm={6}>
+                </Box>
+                <Box>
                   <Typography variant="subtitle2" color="text.secondary">
                     Duration
                   </Typography>
                   <Typography variant="body1">
-                    {recording.duration > 0 ? formatDuration(recording.duration) : 'N/A'}
+                    {recordingData.duration > 0 ? formatDuration(recordingData.duration) : 'N/A'}
                   </Typography>
-                </Grid>
-                <Grid item xs={12} sm={6}>
+                </Box>
+                <Box>
                   <Typography variant="subtitle2" color="text.secondary">
                     File Size
                   </Typography>
                   <Typography variant="body1">
-                    {recording.file_size > 0 ? formatFileSize(recording.file_size) : 'N/A'}
+                    {recordingData.file_size > 0 ? formatFileSize(recordingData.file_size) : 'N/A'}
                   </Typography>
-                </Grid>
-                {recording.file_path && (
-                  <Grid item xs={12}>
+                </Box>
+                {recordingData.file_path && (
+                  <Box sx={{ gridColumn: { xs: '1', sm: '1 / -1' } }}>
                     <Typography variant="subtitle2" color="text.secondary">
                       File Path
                     </Typography>
                     <Typography variant="body2" sx={{ wordBreak: 'break-all' }}>
-                      {recording.file_path}
+                      {recordingData.file_path}
                     </Typography>
-                  </Grid>
+                  </Box>
                 )}
-              </Grid>
+              </Box>
             </CardContent>
           </Card>
 
           {/* Error Information */}
-          {recording.error_message && (
+          {recordingData.error_message && (
             <Card sx={{ mt: 2 }}>
               <CardContent>
                 <Typography variant="h6" gutterBottom color="error">
@@ -365,42 +366,41 @@ const RecordingDetail: React.FC = () => {
                 </Typography>
                 <Paper sx={{ p: 2, bgcolor: 'error.light', color: 'error.contrastText' }}>
                   <Typography variant="body2">
-                    {recording.error_message}
+                    {recordingData.error_message}
                   </Typography>
                 </Paper>
               </CardContent>
             </Card>
           )}
-        </Grid>
+        </Box>
 
         {/* Timeline */}
-        <Grid item xs={12} md={4}>
+        <Box sx={{ flex: 1 }}>
           <Card>
             <CardContent>
               <Typography variant="h6" gutterBottom>
-                <ScheduleIcon sx={{ mr: 1, verticalAlign: 'middle' }} />
                 Timeline
               </Typography>
-              <List dense>
+              <List>
                 <ListItem>
                   <ListItemText
                     primary="Created"
-                    secondary={new Date(recording.created_at).toLocaleString()}
+                    secondary={new Date(recordingData.created_at).toLocaleString()}
                   />
                 </ListItem>
-                {recording.started_at && (
+                {recordingData.started_at && (
                   <ListItem>
                     <ListItemText
                       primary="Started"
-                      secondary={new Date(recording.started_at).toLocaleString()}
+                      secondary={new Date(recordingData.started_at).toLocaleString()}
                     />
                   </ListItem>
                 )}
-                {recording.completed_at && (
+                {recordingData.completed_at && (
                   <ListItem>
                     <ListItemText
                       primary="Completed"
-                      secondary={new Date(recording.completed_at).toLocaleString()}
+                      secondary={new Date(recordingData.completed_at).toLocaleString()}
                     />
                   </ListItem>
                 )}
@@ -409,46 +409,44 @@ const RecordingDetail: React.FC = () => {
           </Card>
 
           {/* Storage Information */}
-          {recording.s3_url && (
+          {recordingData.s3_url && (
             <Card sx={{ mt: 2 }}>
               <CardContent>
                 <Typography variant="h6" gutterBottom>
-                  <CloudIcon sx={{ mr: 1, verticalAlign: 'middle' }} />
-                  Cloud Storage
+                  Storage
                 </Typography>
-                <Typography variant="body2" color="text.secondary" gutterBottom>
-                  This recording is stored in the cloud and available for download.
-                </Typography>
-                <Button
-                  variant="outlined"
-                  size="small"
-                  startIcon={<DownloadIcon />}
-                  onClick={handleDownload}
-                  fullWidth
-                >
-                  Download from Cloud
-                </Button>
+                <List>
+                  <ListItem>
+                    <ListItemText
+                      primary="S3 Storage"
+                      secondary="Available in cloud storage"
+                    />
+                  </ListItem>
+                </List>
               </CardContent>
             </Card>
           )}
-        </Grid>
-      </Grid>
+        </Box>
+      </Box>
 
       {/* Delete Confirmation Dialog */}
       <Dialog open={deleteDialogOpen} onClose={() => setDeleteDialogOpen(false)}>
-        <DialogTitle>Delete Recording</DialogTitle>
+        <DialogTitle>Confirm Delete</DialogTitle>
         <DialogContent>
           <Typography>
-            Are you sure you want to delete "{recording.title}"?
+            Are you sure you want to delete "{recordingData.title}"?
             This action cannot be undone and will remove all associated files.
           </Typography>
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setDeleteDialogOpen(false)}>Cancel</Button>
           <Button
-            onClick={() => deleteRecordingMutation.mutate()}
+            onClick={() => {
+              deleteRecordingMutation.mutate();
+              setDeleteDialogOpen(false);
+            }}
             color="error"
-            disabled={deleteRecordingMutation.isPending}
+            variant="contained"
           >
             Delete
           </Button>

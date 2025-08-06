@@ -5,16 +5,10 @@ import {
   Card,
   CardContent,
   Button,
-  Grid,
   Chip,
   IconButton,
   Tabs,
   Tab,
-  List,
-  ListItem,
-  ListItemText,
-  ListItemIcon,
-  ListItemSecondaryAction,
   Alert,
   LinearProgress,
   Dialog,
@@ -33,7 +27,6 @@ import {
   LiveTv as LiveTvIcon,
   Public as PublicIcon,
   Refresh as RefreshIcon,
-  Add as AddIcon,
   PlayArrow as PlayIcon,
   VideoCall as RecordIcon,
   CheckCircle as CheckIcon,
@@ -120,7 +113,9 @@ const StreamSources: React.FC = () => {
       setSelectedStream(null);
       setRecordingTitle('');
       setRecordingDescription('');
-      navigate(`/recordings/${data.id}`);
+      if (data.success && data.data) {
+        navigate(`/recordings/${data.data.id}`);
+      }
     },
     onError: () => {
       showNotification('Failed to create recording', 'error');
@@ -228,14 +223,14 @@ const StreamSources: React.FC = () => {
 
       {/* Sources Tab */}
       {selectedTab === 0 && (
-        <Grid container spacing={3}>
+        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 3 }}>
           {sourcesLoading ? (
-            <Grid item xs={12}>
+            <Box sx={{ width: '100%' }}>
               <LinearProgress />
-            </Grid>
+            </Box>
           ) : sources && sources.length > 0 ? (
             sources.map((source: StreamSource) => (
-              <Grid item xs={12} sm={6} md={4} key={source.id}>
+              <Box key={source.id} sx={{ flexBasis: { xs: '100%', sm: 'calc(50% - 12px)', md: 'calc(33.333% - 16px)' } }}>
                 <Card>
                   <CardContent>
                     <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
@@ -281,16 +276,16 @@ const StreamSources: React.FC = () => {
                     </Box>
                   </CardContent>
                 </Card>
-              </Grid>
+              </Box>
             ))
           ) : (
-            <Grid item xs={12}>
+            <Box sx={{ width: '100%' }}>
               <Alert severity="info">
                 No stream sources available. Please check your configuration.
               </Alert>
-            </Grid>
+            </Box>
           )}
-        </Grid>
+        </Box>
       )}
 
       {/* Live Streams Tab */}
@@ -330,9 +325,9 @@ const StreamSources: React.FC = () => {
           {streamsLoading ? (
             <LinearProgress />
           ) : liveStreams && liveStreams.length > 0 ? (
-            <Grid container spacing={2}>
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
               {liveStreams.map((stream: Stream) => (
-                <Grid item xs={12} key={stream.id}>
+                <Box key={stream.id}>
                   <Card>
                     <CardContent>
                       <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -392,9 +387,9 @@ const StreamSources: React.FC = () => {
                       </Box>
                     </CardContent>
                   </Card>
-                </Grid>
+                </Box>
               ))}
-            </Grid>
+            </Box>
           ) : (
             <Alert severity="info">
               No live streams available from the selected source.

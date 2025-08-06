@@ -193,6 +193,7 @@ export interface TableColumn<T> {
 }
 
 export interface FilterOptions {
+  search?: string;
   status?: string;
   competition?: string;
   dateFrom?: string;
